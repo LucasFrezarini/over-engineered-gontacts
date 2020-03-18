@@ -1,0 +1,15 @@
+version: "3.1"
+services:
+  contacts_mysql:
+    build:
+      context: .
+      dockerfile: __tests__/docker/mysql/Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: testing
+    ports:
+      - 3307:3306
+    networks:
+      - go-contacts-testing
+networks:
+  go-contacts-testing:
+    driver: bridge
