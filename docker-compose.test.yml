@@ -1,9 +1,20 @@
 version: "3.1"
 services:
-  contacts_mysql:
+  contacts_go_test:
     build:
       context: .
-      dockerfile: __tests__/docker/mysql/Dockerfile
+      dockerfile: Dockerfile.test
+    networks:
+      - go-contacts-testing
+    depends_on:
+      - contacts_mysql_test
+    command: go test ./... -v -tags=${TAGS}
+    environment:
+      - CGO_ENABLED=0
+  contacts_mysql_test:
+    build:
+      context: .
+      dockerfile: tests/docker/mysql/Dockerfile
     environment:
       MYSQL_ROOT_PASSWORD: testing
     ports:

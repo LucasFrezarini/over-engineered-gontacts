@@ -20,7 +20,7 @@ type Server struct {
 // so it will ever return an error when the server goes down.
 func (s *Server) Start() error {
 	mux := s.Router.BuildMux()
-	s.Logger.Info("Starting HTTP server on port 8080...")
+	s.Logger.Info("starting HTTP server on port 8080...")
 	return http.ListenAndServe(":8080", mux)
 }
 
