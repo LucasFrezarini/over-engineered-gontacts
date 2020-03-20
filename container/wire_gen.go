@@ -29,8 +29,9 @@ func InitializeServer() (*server.Server, error) {
 		return nil, err
 	}
 	contactsRepository := contacts.ProvideContactsRepository(sqlDB, zapLogger)
-	controller := contacts.ProvideContactsController(contactsRepository, zapLogger)
-	router := routes.ProvideRouter(controller, zapLogger)
-	serverServer := server.ProvideServer(router, zapLogger)
+	echo := server.ProvideEcho()
+	controller := contacts.ProvideContactsController(contactsRepository, zapLogger, echo)
+	router := routes.ProvideRouter(controller, zapLogger, echo)
+	serverServer := server.ProvideServer(router, zapLogger, echo)
 	return serverServer, nil
 }

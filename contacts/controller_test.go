@@ -3,9 +3,12 @@ package contacts
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
@@ -15,60 +18,45 @@ var contactsList = []*Contact{
 }
 
 type MockedContactsRepository struct{}
-type MockedResponseWriter struct {
-	headers http.Header
-	status  int
-	body    []byte
-}
-
-func (m *MockedResponseWriter) Header() http.Header {
-	return m.headers
-}
-
-func (m *MockedResponseWriter) Write(body []byte) (int, error) {
-	m.body = body
-	return len(body), nil
-}
-
-func (m *MockedResponseWriter) WriteHeader(status int) {
-	m.status = status
-}
-
-func NewMockedResponseWriter() *MockedResponseWriter {
-	return &MockedResponseWriter{
-		headers: make(http.Header),
-	}
-}
 
 func (m *MockedContactsRepository) FindAll() ([]*Contact, error) {
 	return contactsList, nil
 }
 
-func TestControllerFindAll(t *testing.T) {
-	wr := NewMockedResponseWriter()
+func TestGetAllContacts(t *testing.T) {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
 	controller := ProvideContactsController(
 		&MockedContactsRepository{},
 		zap.NewNop(),
+		e,
 	)
 
-	controller.FindAll(wr, &http.Request{})
+	err := controller.FindAll(c)
+
+	if err != nil {
+		t.Errorf("controller FindAll() returned an error: %v", err)
+	}
+
+	if contentType := rec.Header().Get("Content-Type"); !strings.Contains(contentType, "application/json") {
+		t.Errorf("FindAll response header 'Content-Type' doesn't contains 'application/json' (%s)", contentType)
+	}
+
+	if expected := 200; rec.Code != expected {
+		t.Errorf("FindAll wrote respose status %d, want %d", expected, rec.Code)
+	}
 
 	var response = struct {
 		Contacts []*Contact `json:"contacts"`
 	}{}
 
-	err := json.Unmarshal(wr.body, &response)
+	err = json.Unmarshal(rec.Body.Bytes(), &response)
 
 	if err != nil {
-		t.Errorf("JSON unmarshal returned an error while parsing response body: %v", err)
-	}
-
-	if expected, got := "application/json", wr.Header().Get("Content-Type"); got != expected {
-		t.Errorf("FindAll response header 'Content-Type' = %s, want %s", got, expected)
-	}
-
-	if expected := 200; wr.status != expected {
-		t.Errorf("FindAll wrote respose status %d, want %d", expected, wr.status)
+		t.Errorf("controller FindAll() error while unmarshaling response body: %v", err)
 	}
 
 	if expected, got := 2, len(response.Contacts); got != expected {

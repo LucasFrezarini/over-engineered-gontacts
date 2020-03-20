@@ -1,10 +1,10 @@
 package contacts
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
+	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
@@ -13,50 +13,40 @@ import (
 type Controller struct {
 	repository Repository
 	logger     *zap.Logger
+	echo       *echo.Echo
 }
 
 // ProvideContactsController is responsible by building a ContactsController object. Designed especially for the use of
 // wire, to provide the dependencies via DI
-func ProvideContactsController(r Repository, logger *zap.Logger) *Controller {
-	return &Controller{repository: r, logger: logger.Named("ContactsController")}
+func ProvideContactsController(r Repository, logger *zap.Logger, echo *echo.Echo) *Controller {
+	return &Controller{repository: r, logger: logger.Named("ContactsController"), echo: echo}
 }
 
 // FindAll searches all the contacts that exists in the database and returns it
 // in a JSON response
-func (c *Controller) FindAll(w http.ResponseWriter, r *http.Request) {
-	w.Header().Add("Content-Type", "application/json")
-	c.logger.Info("Received GET /contacts/")
-
-	contacts, err := c.repository.FindAll()
+func (ct *Controller) FindAll(c echo.Context) error {
+	ct.logger.Info("Received GET /contacts/")
+	contacts, err := ct.repository.FindAll()
 
 	if err != nil {
-		c.logger.Error(fmt.Sprintf("GET / internal server error: %v", err))
-		w.WriteHeader(500)
-		return
+		ct.logger.Error(fmt.Sprintf("GET / internal server error: %v", err))
+		c.NoContent(http.StatusInternalServerError)
+		return err
 	}
 
 	var response = struct {
 		Contacts []*Contact `json:"contacts"`
 	}{contacts}
 
-	b, err := json.Marshal(response)
-	if err != nil {
-		if err != nil {
-			c.logger.Error(fmt.Sprintf("GET / internal server error: %v", err))
-			w.WriteHeader(500)
-			return
-		}
-	}
-
-	w.WriteHeader(200)
-	w.Write(b)
+	return c.JSON(http.StatusOK, response)
 }
 
-// Mux is responsible for building a server mux for this controller
-func (c *Controller) Mux() *http.ServeMux {
-	c.logger.Debug("Building the ContactsController ServeMux...")
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", c.FindAll)
+// EchoGroup is responsible for building an echo group with all routes for this controller
+func (ct *Controller) EchoGroup() *echo.Group {
+	ct.logger.Debug("Building the ContactsController routing group...")
 
-	return mux
+	gp := ct.echo.Group("/contacts")
+	gp.GET("/", ct.FindAll)
+
+	return gp
 }
