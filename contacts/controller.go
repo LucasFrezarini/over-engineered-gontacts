@@ -25,7 +25,6 @@ func ProvideContactsController(r Repository, logger *zap.Logger, echo *echo.Echo
 // FindAll searches all the contacts that exists in the database and returns it
 // in a JSON response
 func (ct *Controller) FindAll(c echo.Context) error {
-	ct.logger.Info("Received GET /contacts/")
 	contacts, err := ct.repository.FindAll()
 
 	if err != nil {

@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/LucasFrezarini/go-contacts/contacts"
 	"github.com/LucasFrezarini/go-contacts/logger"
+	"github.com/LucasFrezarini/go-contacts/server/middlewares"
 	"github.com/LucasFrezarini/go-contacts/server/routes"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
@@ -30,9 +31,12 @@ func ProvideServer(r *routes.Router, logger *zap.Logger, echo *echo.Echo) *Serve
 }
 
 // ProvideEcho provides a brand new echo instance
-func ProvideEcho() *echo.Echo {
-	return echo.New()
+func ProvideEcho(middlewares *middlewares.Container) *echo.Echo {
+	e := echo.New()
+	e.Use(middlewares.ZapHTTPLogger)
+
+	return e
 }
 
 // ServerSet is the wire.ProviderSet of the server package
-var ServerSet = wire.NewSet(ProvideEcho, ProvideServer, routes.ProvideRouter, contacts.ContactSet, logger.LoggerSet)
+var ServerSet = wire.NewSet(ProvideEcho, ProvideServer, middlewares.ProvideMiddlewaresContainer, routes.ProvideRouter, contacts.ContactSet, logger.LoggerSet)

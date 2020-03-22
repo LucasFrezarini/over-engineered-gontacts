@@ -12,7 +12,7 @@ type Logger struct {
 }
 
 func ProvideLogger() (*zap.Logger, error) {
-	logger, err := zap.NewDevelopment()
+	logger, err := zap.NewProduction()
 
 	if err != nil {
 		return nil, fmt.Errorf("NewLogger: error while starting zap logger: %w", err)

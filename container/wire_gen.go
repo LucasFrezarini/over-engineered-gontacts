@@ -10,6 +10,7 @@ import (
 	"github.com/LucasFrezarini/go-contacts/db"
 	"github.com/LucasFrezarini/go-contacts/logger"
 	"github.com/LucasFrezarini/go-contacts/server"
+	"github.com/LucasFrezarini/go-contacts/server/middlewares"
 	"github.com/LucasFrezarini/go-contacts/server/routes"
 )
 
@@ -29,7 +30,8 @@ func InitializeServer() (*server.Server, error) {
 		return nil, err
 	}
 	contactsRepository := contacts.ProvideContactsRepository(sqlDB, zapLogger)
-	echo := server.ProvideEcho()
+	container := middlewares.ProvideMiddlewaresContainer(zapLogger)
+	echo := server.ProvideEcho(container)
 	controller := contacts.ProvideContactsController(contactsRepository, zapLogger, echo)
 	router := routes.ProvideRouter(controller, zapLogger, echo)
 	serverServer := server.ProvideServer(router, zapLogger, echo)
