@@ -50,3 +50,42 @@ func TestRepositoryFindAll(t *testing.T) {
 		t.Errorf("unfulfilled mock expectations: %v", err)
 	}
 }
+
+func TestRepositoryCreate(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error while opening a stub database connection: %v", err)
+	}
+
+	defer db.Close()
+
+	data := Contact{
+		FirstName: "Zenitsu",
+		LastName:  "Agatsuma",
+	}
+
+	mock.ExpectPrepare("INSERT INTO contact").ExpectExec().WithArgs(data.FirstName, data.LastName).WillReturnResult(sqlmock.NewResult(1, 1))
+
+	repository := ProvideContactsRepository(db, zap.NewNop())
+	contact, err := repository.Create(data)
+	if err != nil {
+		t.Errorf("repository.Create(%T): returned an error while creating a new contact: %v", data, err)
+	}
+
+	if expected := 1; contact.ID != expected {
+		t.Errorf("repository.Create(%T): contact.ID == %d, want %d", data, contact.ID, expected)
+	}
+
+	if expected := data.FirstName; contact.FirstName != expected {
+		t.Errorf("repository.Create(%T): contact.FirstName == %s, want %s", data, contact.FirstName, expected)
+	}
+
+	if expected := data.LastName; contact.LastName != expected {
+		t.Errorf("repository.Create(%T): contact.LastName == %s, want %s", data, contact.LastName, expected)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("repository.Create(%T): unfulfilled mock expectations: %v", data, err)
+	}
+
+}

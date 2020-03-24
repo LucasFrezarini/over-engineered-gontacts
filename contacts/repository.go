@@ -12,6 +12,7 @@ import (
 // this interface was created to facilitate the mocking in the unit tests
 type Repository interface {
 	FindAll() ([]*Contact, error)
+	Create(Contact) (*Contact, error)
 }
 
 type ContactsRepository struct {
@@ -47,6 +48,31 @@ func (r *ContactsRepository) FindAll() ([]*Contact, error) {
 	}
 
 	return contacts, nil
+}
+
+func (r *ContactsRepository) Create(c Contact) (*Contact, error) {
+	r.logger.Debug("create: executing create...")
+	raw := "INSERT INTO contact (first_name, last_name) VALUES (?, ?)"
+	r.logger.Debug("create: preparing statement: " + raw)
+
+	stmt, err := r.DB.Prepare(raw)
+	if err != nil {
+		return nil, fmt.Errorf("create: error while preparing statement: %w", err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(c.FirstName, c.LastName)
+	if err != nil {
+		return nil, fmt.Errorf("create: error while executing insert query: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return nil, fmt.Errorf("create: error while fetching the last inserted ID: %w", err)
+	}
+
+	c.ID = int(id)
+	return &c, nil
 }
 
 var RepositorySet = wire.NewSet(

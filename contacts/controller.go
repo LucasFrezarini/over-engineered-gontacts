@@ -40,12 +40,28 @@ func (ct *Controller) FindAll(c echo.Context) error {
 	return c.JSON(http.StatusOK, response)
 }
 
+// Create creates a new contact with the info provided in the body
+func (ct *Controller) Create(c echo.Context) error {
+	body := new(Contact)
+	if err := c.Bind(body); err != nil {
+		return err
+	}
+
+	created, err := ct.repository.Create(*body)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, created)
+}
+
 // EchoGroup is responsible for building an echo group with all routes for this controller
 func (ct *Controller) EchoGroup() *echo.Group {
 	ct.logger.Debug("Building the ContactsController routing group...")
 
 	gp := ct.echo.Group("/contacts")
 	gp.GET("/", ct.FindAll)
+	gp.POST("/", ct.Create)
 
 	return gp
 }
