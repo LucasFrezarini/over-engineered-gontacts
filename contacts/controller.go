@@ -41,15 +41,24 @@ func (ct *Controller) FindAll(c echo.Context) error {
 }
 
 // Create creates a new contact with the info provided in the body
-func (ct *Controller) Create(c echo.Context) error {
+func (ct *Controller) Create(c echo.Context) (err error) {
 	body := new(Contact)
-	if err := c.Bind(body); err != nil {
-		return err
+
+	if err = c.Bind(body); err != nil {
+		return
+	}
+
+	if err = c.Validate(body); err != nil {
+		c.JSON(400, map[string]interface{}{
+			"message": err.Error(),
+		})
+
+		return
 	}
 
 	created, err := ct.repository.Create(*body)
 	if err != nil {
-		return err
+		return
 	}
 
 	return c.JSON(http.StatusCreated, created)

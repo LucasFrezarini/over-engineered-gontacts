@@ -5,12 +5,13 @@ import (
 	"github.com/LucasFrezarini/go-contacts/logger"
 	"github.com/LucasFrezarini/go-contacts/server/middlewares"
 	"github.com/LucasFrezarini/go-contacts/server/routes"
+	"github.com/LucasFrezarini/go-contacts/server/validator"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
 )
 
-// A Server provides
+// A Server contains all the artifacts necessary to start a fresh app's server instance
 type Server struct {
 	router *routes.Router
 	Logger *zap.Logger
@@ -33,6 +34,8 @@ func ProvideServer(r *routes.Router, logger *zap.Logger, echo *echo.Echo) *Serve
 // ProvideEcho provides a brand new echo instance
 func ProvideEcho(middlewares *middlewares.Container) *echo.Echo {
 	e := echo.New()
+	e.Validator = validator.NewCustomValidator()
+
 	e.Use(middlewares.ZapHTTPLogger)
 
 	return e
