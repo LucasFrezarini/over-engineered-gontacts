@@ -17,21 +17,19 @@ type Repository interface {
 
 type ContactsRepository struct {
 	DB     *sql.DB
-	logger *zap.Logger
+	Logger *zap.Logger
 }
 
 func ProvideContactsRepository(db *sql.DB, logger *zap.Logger) *ContactsRepository {
-	return &ContactsRepository{DB: db, logger: logger.Named("ContactsRepository")}
+	return &ContactsRepository{DB: db, Logger: logger.Named("ContactsRepository")}
 }
 
 func (r *ContactsRepository) FindAll() ([]*Contact, error) {
-	r.logger.Debug("Executing FindAll()")
-	stmt := "SELECT id, first_name, last_name FROM contact"
-	r.logger.Debug("stmt: " + stmt)
+	stmt := `SELECT id, first_name, last_name FROM contact`
 	rows, err := r.DB.Query(stmt)
 
 	if err != nil {
-		return nil, fmt.Errorf("FindAll: error while fetching contacts: %w", err)
+		return nil, fmt.Errorf("FindAll(): error while fetching contacts: %w", err)
 	}
 
 	defer rows.Close()
@@ -41,7 +39,7 @@ func (r *ContactsRepository) FindAll() ([]*Contact, error) {
 		var contact Contact
 
 		if err := rows.Scan(&contact.ID, &contact.FirstName, &contact.LastName); err != nil {
-			return nil, fmt.Errorf("FindAll: error while scanning rows: %w", err)
+			return nil, fmt.Errorf("FindAll(): error while scanning rows: %w", err)
 		}
 
 		contacts = append(contacts, &contact)
@@ -51,9 +49,9 @@ func (r *ContactsRepository) FindAll() ([]*Contact, error) {
 }
 
 func (r *ContactsRepository) Create(c Contact) (*Contact, error) {
-	r.logger.Debug("create: executing create...")
+	r.Logger.Debug("create: executing create...")
 	raw := "INSERT INTO contact (first_name, last_name) VALUES (?, ?)"
-	r.logger.Debug("create: preparing statement: " + raw)
+	r.Logger.Debug("create: preparing statement: " + raw)
 
 	stmt, err := r.DB.Prepare(raw)
 	if err != nil {

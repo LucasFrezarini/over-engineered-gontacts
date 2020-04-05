@@ -14,29 +14,6 @@ import (
 	"go.uber.org/zap"
 )
 
-var contactsList = []*Contact{
-	&Contact{1, "Inosuke", "Hashibira"},
-	&Contact{2, "Gonpachiro", "Kamaboko"},
-}
-
-type MockedContactsRepository struct {
-	id int
-}
-
-func (m *MockedContactsRepository) FindAll() ([]*Contact, error) {
-	return contactsList, nil
-}
-
-func (m *MockedContactsRepository) Create(c Contact) (*Contact, error) {
-	m.id++
-
-	return &Contact{
-		ID:        m.id,
-		FirstName: c.FirstName,
-		LastName:  c.LastName,
-	}, nil
-}
-
 func TestGetAllContacts(t *testing.T) {
 	e := echo.New()
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
@@ -44,6 +21,7 @@ func TestGetAllContacts(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	controller := ProvideContactsController(
+		ProvideContactsService(zap.NewNop(), &MockedContactsRepository{}, &MockedEmailsRepository{}),
 		&MockedContactsRepository{},
 		zap.NewNop(),
 		e,
@@ -96,6 +74,8 @@ func TestCreateContact(t *testing.T) {
 	}
 
 	e := echo.New()
+	e.Validator = validator.NewCustomValidator()
+
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(b))
 	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
@@ -103,6 +83,7 @@ func TestCreateContact(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	controller := ProvideContactsController(
+		nil,
 		&MockedContactsRepository{},
 		zap.NewNop(),
 		e,
@@ -181,6 +162,7 @@ func TestCreateContactBadRequest(t *testing.T) {
 			rec := httptest.NewRecorder()
 			c := e.NewContext(req, rec)
 			controller := ProvideContactsController(
+				nil,
 				&MockedContactsRepository{},
 				zap.NewNop(),
 				e,

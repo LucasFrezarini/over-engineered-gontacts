@@ -42,4 +42,4 @@ func ProvideEcho(middlewares *middlewares.Container) *echo.Echo {
 }
 
 // ServerSet is the wire.ProviderSet of the server package
-var ServerSet = wire.NewSet(ProvideEcho, ProvideServer, middlewares.ProvideMiddlewaresContainer, routes.ProvideRouter, contacts.ContactSet, logger.LoggerSet)
+var ServerSet = wire.NewSet(ProvideEcho, ProvideServer, middlewares.ProvideMiddlewaresContainer, routes.ProvideRouter, contacts.ControllerSet, logger.LoggerSet)

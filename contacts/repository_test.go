@@ -17,8 +17,8 @@ func TestRepositoryFindAll(t *testing.T) {
 	defer db.Close()
 
 	expectedContacts := []*Contact{
-		&Contact{1, "Inosuke", "Hashibira"},
-		&Contact{2, "Gonpachiro", "Kamaboko"},
+		&Contact{1, "Inosuke", "Hashibira", nil},
+		&Contact{2, "Gonpachiro", "Kamaboko", nil},
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "first_name", "last_name"})
