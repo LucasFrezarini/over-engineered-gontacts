@@ -10,7 +10,7 @@
 
 ### Fields
 
-- [ ] Create foreign tables to contain contacts' emails and phone numbers
+- [x] Create foreign tables to contain contacts' emails and phone numbers
 
 ### Improvements
 
