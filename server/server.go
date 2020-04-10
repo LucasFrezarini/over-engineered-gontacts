@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/LucasFrezarini/go-contacts/contacts"
+	"github.com/LucasFrezarini/go-contacts/db"
 	"github.com/LucasFrezarini/go-contacts/logger"
 	"github.com/LucasFrezarini/go-contacts/server/middlewares"
 	"github.com/LucasFrezarini/go-contacts/server/routes"
@@ -42,4 +43,12 @@ func ProvideEcho(middlewares *middlewares.Container) *echo.Echo {
 }
 
 // ServerSet is the wire.ProviderSet of the server package
-var ServerSet = wire.NewSet(ProvideEcho, ProvideServer, middlewares.ProvideMiddlewaresContainer, routes.ProvideRouter, contacts.ControllerSet, logger.LoggerSet)
+var ServerSet = wire.NewSet(
+	ProvideEcho,
+	ProvideServer,
+	middlewares.ProvideMiddlewaresContainer,
+	routes.ProvideRouter,
+	contacts.Set,
+	logger.LoggerSet,
+	db.DBSet,
+)

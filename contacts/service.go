@@ -46,4 +46,4 @@ func (s *Service) FindAllContacts() ([]*Contact, error) {
 }
 
 // ServiceSet is a wire set which contains all the bindings needed for creating a new service
-var ServiceSet = wire.NewSet(ProvideContactsService, RepositorySet, email.EmailRepositorySet)
+var ServiceSet = wire.NewSet(ProvideContactsService)

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/LucasFrezarini/go-contacts/db"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -80,4 +79,4 @@ func (ct *Controller) EchoGroup() *echo.Group {
 
 // ControllerSet is a wire set which contains all the bindings needed for building all
 // the resources present in this package
-var ControllerSet = wire.NewSet(ProvideContactsController, ServiceSet, db.DBSet)
+var ControllerSet = wire.NewSet(ProvideContactsController)

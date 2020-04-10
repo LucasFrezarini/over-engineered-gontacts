@@ -58,9 +58,9 @@ func (r *Repository) FindByContactID(id int) ([]*Email, error) {
 	return emails, nil
 }
 
-// EmailRepositorySet is the wire set which contains all the binding necessary
+// RepositorySet is the wire set which contains all the binding necessary
 // to create a new email Repository
-var EmailRepositorySet = wire.NewSet(
+var RepositorySet = wire.NewSet(
 	ProvideEmailRepository,
 	wire.Bind(new(GenericRepository), new(*Repository)),
 )
