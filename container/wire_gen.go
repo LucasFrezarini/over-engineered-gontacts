@@ -8,6 +8,7 @@ package container
 import (
 	"github.com/LucasFrezarini/go-contacts/contacts"
 	"github.com/LucasFrezarini/go-contacts/contacts/email"
+	"github.com/LucasFrezarini/go-contacts/contacts/phone"
 	"github.com/LucasFrezarini/go-contacts/db"
 	"github.com/LucasFrezarini/go-contacts/logger"
 	"github.com/LucasFrezarini/go-contacts/server"
@@ -32,7 +33,8 @@ func InitializeServer() (*server.Server, error) {
 	}
 	contactsRepository := contacts.ProvideContactsRepository(sqlDB, zapLogger)
 	repository := email.ProvideEmailRepository(sqlDB, zapLogger)
-	service := contacts.ProvideContactsService(zapLogger, contactsRepository, repository)
+	phoneRepository := phone.ProvideRepository(sqlDB, zapLogger)
+	service := contacts.ProvideContactsService(zapLogger, contactsRepository, repository, phoneRepository)
 	container := middlewares.ProvideMiddlewaresContainer(zapLogger)
 	echo := server.ProvideEcho(container)
 	controller := contacts.ProvideContactsController(service, contactsRepository, zapLogger, echo)

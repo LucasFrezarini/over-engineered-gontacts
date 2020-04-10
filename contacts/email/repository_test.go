@@ -18,9 +18,9 @@ func TestFindByContactID(t *testing.T) {
 
 	contactID := 2
 
-	expectedEmails := []*Email{
-		&Email{ID: 1, ContactID: contactID, Address: "inosuke@gmail.com"},
-		&Email{ID: 2, ContactID: contactID, Address: "zenitsu@yahoo.com"},
+	expectedEmails := []Email{
+		Email{ID: 1, ContactID: contactID, Address: "inosuke@gmail.com"},
+		Email{ID: 2, ContactID: contactID, Address: "zenitsu@yahoo.com"},
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "contact_id", "address"})
@@ -35,20 +35,20 @@ func TestFindByContactID(t *testing.T) {
 	emails, err := repository.FindByContactID(contactID)
 
 	if err != nil {
-		t.Errorf("FindByEmailID(%d) returned an error: '%v', want nil", contactID, err)
+		t.Errorf("FindByContactID(%d) returned an error: '%v', want nil", contactID, err)
 	}
 
 	if expected, got := len(expectedEmails), len(emails); expected != got {
-		t.Errorf("FindByEmailID(%d) returned %d emails, want %d", contactID, got, expected)
+		t.Errorf("FindByContactID(%d) returned %d emails, want %d", contactID, got, expected)
 	}
 
 	for i, c := range emails {
 		if expected := expectedEmails[i]; !reflect.DeepEqual(expected, c) {
-			t.Errorf("FindByEmail(%d) contacts[%d] = %v, want %v", contactID, i, c, expected)
+			t.Errorf("FindByContactID(%d) emails[%d] = %v, want %v", contactID, i, c, expected)
 		}
 	}
 
 	if err := mock.ExpectationsWereMet(); err != nil {
-		t.Errorf("FindByEmail(%d) unfulfilled mock expectations: %v", contactID, err)
+		t.Errorf("FindByContactID(%d) unfulfilled mock expectations: %v", contactID, err)
 	}
 }

@@ -10,5 +10,6 @@ require (
 	github.com/google/wire v0.4.0
 	github.com/joho/godotenv v1.3.0
 	github.com/labstack/echo/v4 v4.1.15
+	github.com/stretchr/testify v1.5.1
 	go.uber.org/zap v1.14.1
 )

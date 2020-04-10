@@ -12,7 +12,7 @@ import (
 // GenericRepository defines the structure of a generic email's repository
 // created to facilitate the mocking in unit testing
 type GenericRepository interface {
-	FindByContactID(id int) ([]*Email, error)
+	FindByContactID(id int) ([]Email, error)
 }
 
 // A Repository can perform all the CRUD logic of the
@@ -30,7 +30,7 @@ func ProvideEmailRepository(db *sql.DB, logger *zap.Logger) *Repository {
 
 // FindByContactID return all the emails registered for the contact with
 // the id provided as parameter
-func (r *Repository) FindByContactID(id int) ([]*Email, error) {
+func (r *Repository) FindByContactID(id int) ([]Email, error) {
 	raw := "SELECT id, contact_id, address FROM email WHERE contact_id = ?"
 
 	rows, err := r.DB.Query(raw, id)
@@ -41,7 +41,7 @@ func (r *Repository) FindByContactID(id int) ([]*Email, error) {
 	}
 
 	defer rows.Close()
-	emails := make([]*Email, 0)
+	emails := make([]Email, 0)
 
 	for rows.Next() {
 		var email Email
@@ -52,7 +52,7 @@ func (r *Repository) FindByContactID(id int) ([]*Email, error) {
 			return nil, errors.New(msg)
 		}
 
-		emails = append(emails, &email)
+		emails = append(emails, email)
 	}
 
 	return emails, nil

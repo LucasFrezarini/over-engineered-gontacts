@@ -11,6 +11,7 @@ import (
 
 	"github.com/LucasFrezarini/go-contacts/server/validator"
 	"github.com/labstack/echo/v4"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -21,7 +22,7 @@ func TestGetAllContacts(t *testing.T) {
 	c := e.NewContext(req, rec)
 
 	controller := ProvideContactsController(
-		ProvideContactsService(zap.NewNop(), &MockedContactsRepository{}, &MockedEmailsRepository{}),
+		ProvideContactsService(zap.NewNop(), &MockedContactsRepository{}, &MockedEmailRepository{}, &MockedPhoneRepository{}),
 		&MockedContactsRepository{},
 		zap.NewNop(),
 		e,
@@ -56,9 +57,8 @@ func TestGetAllContacts(t *testing.T) {
 	}
 
 	for i, c := range response.Contacts {
-		if expected, got := contactsList[i], c; !reflect.DeepEqual(expected, got) {
-			t.Errorf("FindAll response body's contact[%d] = %v, want %v", i, got, expected)
-		}
+		expected, actual := contactsList[i], c
+		assert.Equalf(t, expected, actual, "FindAll response body's contact[%d] != expected", i)
 	}
 }
 
