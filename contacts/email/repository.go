@@ -13,6 +13,7 @@ import (
 // created to facilitate the mocking in unit testing
 type GenericRepository interface {
 	FindByContactID(id int) ([]Email, error)
+	Create(contactID int, emails ...string) ([]Email, error)
 }
 
 // A Repository can perform all the CRUD logic of the
@@ -56,6 +57,49 @@ func (r *Repository) FindByContactID(id int) ([]Email, error) {
 	}
 
 	return emails, nil
+}
+
+// Create creates one or more emails for the contactID provided
+func (r *Repository) Create(contactID int, emails ...string) ([]Email, error) {
+	insertedEmails := make([]Email, 0, len(emails))
+
+	for _, address := range emails {
+		email, err := r.createSingleEmail(contactID, address)
+
+		if err != nil {
+			return nil, fmt.Errorf("error while inserting email into the database: %w", err)
+		}
+
+		insertedEmails = append(insertedEmails, email)
+	}
+
+	return insertedEmails, nil
+}
+
+func (r *Repository) createSingleEmail(contactID int, address string) (Email, error) {
+	raw := "INSERT INTO email (contact_id, address) VALUES (?, ?)"
+
+	stmt, err := r.DB.Prepare(raw)
+	if err != nil {
+		return Email{}, fmt.Errorf("createSingleEmail: error while preparing statement: %w", err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(contactID, address)
+	if err != nil {
+		return Email{}, fmt.Errorf("createSingleEmail: error while executing insert query: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return Email{}, fmt.Errorf("createSingleEmail: error while fetching the last inserted ID: %w", err)
+	}
+
+	return Email{
+		ID:        int(id),
+		ContactID: contactID,
+		Address:   address,
+	}, nil
 }
 
 // RepositorySet is the wire set which contains all the binding necessary

@@ -3,6 +3,7 @@ package contacts
 import (
 	"github.com/LucasFrezarini/go-contacts/contacts/email"
 	"github.com/LucasFrezarini/go-contacts/contacts/phone"
+	"go.uber.org/zap"
 )
 
 var contactsList = []*Contact{
@@ -75,14 +76,58 @@ func filterPhonesByContactID(id int) []phone.Phone {
 	return filteredPhones
 }
 
-type MockedEmailRepository struct{}
+type MockedEmailRepository struct {
+	id int
+}
 
 func (m *MockedEmailRepository) FindByContactID(id int) ([]email.Email, error) {
 	return filterEmailsByContactID(id), nil
 }
 
-type MockedPhoneRepository struct{}
+func (m *MockedEmailRepository) Create(contactID int, emails ...string) ([]email.Email, error) {
+	parsed := make([]email.Email, 0, len(emails))
 
-func (p *MockedPhoneRepository) FindByContactID(id int) ([]phone.Phone, error) {
+	for _, e := range emails {
+		m.id++
+		parsed = append(parsed, email.Email{
+			ID:        m.id,
+			Address:   e,
+			ContactID: contactID,
+		})
+	}
+
+	return parsed, nil
+}
+
+type MockedPhoneRepository struct {
+	id int
+}
+
+func (pr *MockedPhoneRepository) FindByContactID(id int) ([]phone.Phone, error) {
 	return filterPhonesByContactID(id), nil
+}
+
+func (pr *MockedPhoneRepository) Create(contactID int, phones ...phone.CreatePhoneData) ([]phone.Phone, error) {
+	parsed := make([]phone.Phone, 0, len(phones))
+
+	for _, p := range phones {
+		pr.id++
+		parsed = append(parsed, phone.Phone{
+			ID:        pr.id,
+			ContactID: contactID,
+			Type:      p.Type,
+			Number:    p.Number,
+		})
+	}
+
+	return parsed, nil
+}
+
+func ProvideContactMockedService() *Service {
+	return ProvideContactsService(
+		zap.NewNop(),
+		&MockedContactsRepository{},
+		&MockedEmailRepository{},
+		&MockedPhoneRepository{},
+	)
 }

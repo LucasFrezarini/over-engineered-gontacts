@@ -44,8 +44,14 @@ func (ct *Controller) FindAll(c echo.Context) error {
 
 // Create creates a new contact with the info provided in the body
 func (ct *Controller) Create(c echo.Context) (err error) {
-	body := new(Contact)
+	type RequestBody struct {
+		FirstName string              `json:"first_name" validate:"required"`
+		LastName  string              `json:"last_name" validate:"required"`
+		Emails    []string            `json:"emails"`
+		Phones    []map[string]string `json:"phones"`
+	}
 
+	body := new(RequestBody)
 	if err = c.Bind(body); err != nil {
 		return
 	}
@@ -58,7 +64,13 @@ func (ct *Controller) Create(c echo.Context) (err error) {
 		return
 	}
 
-	created, err := ct.repository.Create(*body)
+	created, err := ct.service.Create(CreateContactData{
+		FirstName: body.FirstName,
+		LastName:  body.LastName,
+		Emails:    body.Emails,
+		Phones:    body.Phones,
+	})
+
 	if err != nil {
 		return
 	}

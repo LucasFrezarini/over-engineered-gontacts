@@ -56,5 +56,41 @@ func (s *Service) FindAllContacts() ([]*Contact, error) {
 	return contacts, nil
 }
 
+// CreateContactData is the structure of a contact data that will be created
+type CreateContactData struct {
+	FirstName string
+	LastName  string
+	Emails    []string
+	Phones    []map[string]string
+}
+
+// Create creates a new contact with the data provided as parameter.
+// If the contact is created successfully, it will return a formated Contact object
+func (s *Service) Create(c CreateContactData) (*Contact, error) {
+	contact, err := s.ContactsRepository.Create(Contact{
+		FirstName: c.FirstName,
+		LastName:  c.LastName,
+	})
+
+	if err != nil {
+		msg := fmt.Sprintf("error while creating a new contact: %v", err)
+		s.Logger.Error(msg)
+		return nil, errors.New(msg)
+	}
+
+	if len(c.Emails) != 0 {
+		emails, err := s.EmailRepository.Create(contact.ID, c.Emails...)
+		if err != nil {
+			msg := fmt.Sprintf("error while inserting contact's emails: %v", err)
+			s.Logger.Error(msg)
+			return nil, errors.New(msg)
+		}
+
+		contact.Emails = emails
+	}
+
+	return contact, nil
+}
+
 // ServiceSet is a wire set which contains all the bindings needed for creating a new service
 var ServiceSet = wire.NewSet(ProvideContactsService)

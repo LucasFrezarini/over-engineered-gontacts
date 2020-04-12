@@ -51,3 +51,39 @@ func TestServiceFindAllContacts(t *testing.T) {
 		}
 	}
 }
+
+func TestServiceCreate(t *testing.T) {
+	c := CreateContactData{
+		FirstName: "Zenitsu",
+		LastName:  "Agatsuma",
+		Emails:    []string{"zenitsu01@gmail.com", "zenitsu02@gmail.com"},
+	}
+
+	service := ProvideContactsService(
+		zap.NewNop(),
+		&MockedContactsRepository{},
+		&MockedEmailRepository{},
+		&MockedPhoneRepository{},
+	)
+
+	contact, err := service.Create(c)
+	if err != nil {
+		t.Errorf("Create(%v) returned an non-nil error: '%v', want nil", c, err)
+	}
+
+	if contact.ID == 0 {
+		t.Errorf("Create(%v) contact.ID == 0, want != 0", c)
+	}
+
+	if expected, got := c.FirstName, contact.FirstName; expected != got {
+		t.Errorf("Create(%v) contact.FirstName == %s, want %s", c, got, expected)
+	}
+
+	if expected, got := c.LastName, contact.LastName; expected != got {
+		t.Errorf("Create(%v) contact.LastName == %s, want %s", c, got, expected)
+	}
+
+	if expected, got := len(c.Emails), len(contact.Emails); expected != got {
+		t.Errorf("Create(%v) contact has %d emails, want %d", c, got, expected)
+	}
+}

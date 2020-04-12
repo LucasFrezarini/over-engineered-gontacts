@@ -52,3 +52,41 @@ func TestFindByContactID(t *testing.T) {
 		t.Errorf("FindByContactID(%d) unfulfilled mock expectations: %v", contactID, err)
 	}
 }
+
+func TestEmailCreate(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error while opening a stub database connection: %v", err)
+	}
+
+	defer db.Close()
+
+	contactID := 2
+
+	emails := []string{"zenitsu01@gmail.com", "zenitsu02@yahoo.com"}
+
+	for i, e := range emails {
+		mock.ExpectPrepare("INSERT INTO email").ExpectExec().WithArgs(contactID, e).WillReturnResult(sqlmock.NewResult(int64(i+1), 1))
+	}
+
+	repository := ProvideEmailRepository(db, zap.NewNop())
+	insertedEmails, err := repository.Create(contactID, emails...)
+
+	if err != nil {
+		t.Errorf("Create(%d, %v) returned a non-nil error '%v', want nil", contactID, emails, err)
+	}
+
+	if expected, got := len(emails), len(insertedEmails); expected != got {
+		t.Errorf("Create(%d, %v) returned %d emails, want %d", contactID, emails, got, expected)
+	}
+
+	for i, e := range insertedEmails {
+		if e.ID == 0 {
+			t.Errorf("Create(%d, %v) email[%d].ID == 0, want != 0", contactID, emails, i)
+		}
+	}
+
+	if err = mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("Create(%d, %v): unfulfilled mock expectations: %v", contactID, emails, err)
+	}
+}

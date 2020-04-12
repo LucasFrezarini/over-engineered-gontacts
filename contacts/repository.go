@@ -49,9 +49,7 @@ func (r *ContactsRepository) FindAll() ([]*Contact, error) {
 }
 
 func (r *ContactsRepository) Create(c Contact) (*Contact, error) {
-	r.Logger.Debug("create: executing create...")
 	raw := "INSERT INTO contact (first_name, last_name) VALUES (?, ?)"
-	r.Logger.Debug("create: preparing statement: " + raw)
 
 	stmt, err := r.DB.Prepare(raw)
 	if err != nil {
