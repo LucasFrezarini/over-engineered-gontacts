@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/LucasFrezarini/go-contacts/contacts/phone"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -64,11 +65,20 @@ func (ct *Controller) Create(c echo.Context) (err error) {
 		return
 	}
 
+	phonesData := make([]phone.CreatePhoneData, 0, len(body.Phones))
+
+	for _, p := range body.Phones {
+		phonesData = append(phonesData, phone.CreatePhoneData{
+			Number: p["number"],
+			Type:   p["type"],
+		})
+	}
+
 	created, err := ct.service.Create(CreateContactData{
 		FirstName: body.FirstName,
 		LastName:  body.LastName,
 		Emails:    body.Emails,
-		Phones:    body.Phones,
+		Phones:    phonesData,
 	})
 
 	if err != nil {

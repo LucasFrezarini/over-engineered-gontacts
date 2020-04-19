@@ -12,9 +12,8 @@ import (
 // CreatePhoneData defines the fields that need to be provided in order to create a new
 // phone record in the database
 type CreatePhoneData struct {
-	ContactID int    `json:"contact_id"`
-	Number    string `json:"number"`
-	Type      string `json:"type"`
+	Number string `json:"number"`
+	Type   string `json:"type"`
 }
 
 // GenericRepository defines the structure of this package's repository
@@ -93,7 +92,7 @@ func (r *Repository) createSinglePhone(contactID int, phone CreatePhoneData) (Ph
 
 	defer stmt.Close()
 
-	result, err := stmt.Exec(phone.ContactID, phone.Type, phone.Number)
+	result, err := stmt.Exec(contactID, phone.Type, phone.Number)
 	if err != nil {
 		return Phone{}, fmt.Errorf("createSinglePhone: error while executing statement: %w", err)
 	}

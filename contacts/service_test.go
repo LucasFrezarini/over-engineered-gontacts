@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/LucasFrezarini/go-contacts/contacts/phone"
 	"go.uber.org/zap"
 )
 
@@ -57,6 +58,24 @@ func TestServiceCreate(t *testing.T) {
 		FirstName: "Zenitsu",
 		LastName:  "Agatsuma",
 		Emails:    []string{"zenitsu01@gmail.com", "zenitsu02@gmail.com"},
+		Phones: []phone.CreatePhoneData{
+			phone.CreatePhoneData{
+				Type:   "home",
+				Number: "551122223333",
+			},
+			phone.CreatePhoneData{
+				Type:   "mobile",
+				Number: "5511944445555",
+			},
+			phone.CreatePhoneData{
+				Type:   "fax",
+				Number: "5511666677777",
+			},
+			phone.CreatePhoneData{
+				Type:   "work",
+				Number: "551188889999",
+			},
+		},
 	}
 
 	service := ProvideContactsService(
@@ -85,5 +104,9 @@ func TestServiceCreate(t *testing.T) {
 
 	if expected, got := len(c.Emails), len(contact.Emails); expected != got {
 		t.Errorf("Create(%v) contact has %d emails, want %d", c, got, expected)
+	}
+
+	if expected, got := len(c.Phones), len(contact.Phones); expected != got {
+		t.Errorf("Create(%v) contact has %d phones, want %d", c, got, expected)
 	}
 }

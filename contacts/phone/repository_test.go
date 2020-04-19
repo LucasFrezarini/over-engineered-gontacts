@@ -64,10 +64,10 @@ func TestPhoneCreate(t *testing.T) {
 
 	contactID := 2
 	phonesData := []CreatePhoneData{
-		CreatePhoneData{ContactID: contactID, Number: "1122223333", Type: PhoneTypeHome},
-		CreatePhoneData{ContactID: contactID, Number: "33444445555", Type: PhoneTypeMobile},
-		CreatePhoneData{ContactID: contactID, Number: "+5511911112222", Type: PhoneTypeWork},
-		CreatePhoneData{ContactID: contactID, Number: "+5511933332222", Type: PhoneTypeFax},
+		CreatePhoneData{Number: "1122223333", Type: PhoneTypeHome},
+		CreatePhoneData{Number: "33444445555", Type: PhoneTypeMobile},
+		CreatePhoneData{Number: "+5511911112222", Type: PhoneTypeWork},
+		CreatePhoneData{Number: "+5511933332222", Type: PhoneTypeFax},
 	}
 
 	for i, phoneData := range phonesData {

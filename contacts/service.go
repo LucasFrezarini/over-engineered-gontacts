@@ -61,7 +61,7 @@ type CreateContactData struct {
 	FirstName string
 	LastName  string
 	Emails    []string
-	Phones    []map[string]string
+	Phones    []phone.CreatePhoneData
 }
 
 // Create creates a new contact with the data provided as parameter.
@@ -87,6 +87,17 @@ func (s *Service) Create(c CreateContactData) (*Contact, error) {
 		}
 
 		contact.Emails = emails
+	}
+
+	if len(c.Phones) != 0 {
+		phones, err := s.PhoneRepository.Create(contact.ID, c.Phones...)
+		if err != nil {
+			msg := fmt.Sprintf("error while inserting contact's phone: %v", err)
+			s.Logger.Error(msg)
+			return nil, errors.New(msg)
+		}
+
+		contact.Phones = phones
 	}
 
 	return contact, nil
