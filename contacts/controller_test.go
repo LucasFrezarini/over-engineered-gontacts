@@ -3,6 +3,7 @@ package contacts
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -86,19 +87,19 @@ func TestCreateContactSuccess(t *testing.T) {
 				"last_name":  "Agatsuma",
 				"emails":     []string{"zenitsu.agatsuma@gmail.com"},
 				"phones": []map[string]string{
-					map[string]string{
+					{
 						"type":   "home",
 						"number": "551122223333",
 					},
-					map[string]string{
+					{
 						"type":   "mobile",
 						"number": "5511944445555",
 					},
-					map[string]string{
+					{
 						"type":   "fax",
 						"number": "5511666677777",
 					},
-					map[string]string{
+					{
 						"type":   "work",
 						"number": "551188889999",
 					},
@@ -274,4 +275,32 @@ func TestCreateContactBadRequest(t *testing.T) {
 		})
 	}
 
+}
+
+func TestDeleteContactByID(t *testing.T) {
+	id := 2
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%d", id), nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("2")
+
+	controller := ProvideContactsController(
+		ProvideContactsService(zap.NewNop(), &MockedContactsRepository{}, &MockedEmailRepository{}, &MockedPhoneRepository{}),
+		&MockedContactsRepository{},
+		zap.NewNop(),
+		e,
+	)
+
+	err := controller.Delete(c)
+
+	if err != nil {
+		t.Errorf("controller Delete() returned an error: %v", err)
+	}
+
+	if expected := 204; rec.Code != expected {
+		t.Errorf("Delete wrote respose status %d, want %d", rec.Code, expected)
+	}
 }

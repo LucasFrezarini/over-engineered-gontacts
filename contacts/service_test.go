@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/LucasFrezarini/go-contacts/contacts/phone"
+	"github.com/golang/mock/gomock"
 	"go.uber.org/zap"
 )
 
@@ -59,19 +60,19 @@ func TestServiceCreate(t *testing.T) {
 		LastName:  "Agatsuma",
 		Emails:    []string{"zenitsu01@gmail.com", "zenitsu02@gmail.com"},
 		Phones: []phone.CreatePhoneData{
-			phone.CreatePhoneData{
+			{
 				Type:   "home",
 				Number: "551122223333",
 			},
-			phone.CreatePhoneData{
+			{
 				Type:   "mobile",
 				Number: "5511944445555",
 			},
-			phone.CreatePhoneData{
+			{
 				Type:   "fax",
 				Number: "5511666677777",
 			},
-			phone.CreatePhoneData{
+			{
 				Type:   "work",
 				Number: "551188889999",
 			},
@@ -108,5 +109,28 @@ func TestServiceCreate(t *testing.T) {
 
 	if expected, got := len(c.Phones), len(contact.Phones); expected != got {
 		t.Errorf("Create(%v) contact has %d phones, want %d", c, got, expected)
+	}
+}
+
+func TestServiceDeleteContactByID(t *testing.T) {
+	contactID := 2
+
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+
+	repository := NewMockRepository(ctrl)
+	repository.EXPECT().DeleteByID(gomock.Eq(contactID)).Return(nil)
+
+	service := ProvideContactsService(
+		zap.NewNop(),
+		repository,
+		&MockedEmailRepository{},
+		&MockedPhoneRepository{},
+	)
+
+	err := service.DeleteContactByID(contactID)
+
+	if err != nil {
+		t.Errorf("DeleteContactByID(%d) returned an non nil error: '%v', want nil", contactID, err)
 	}
 }

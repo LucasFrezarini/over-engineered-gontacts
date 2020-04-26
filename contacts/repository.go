@@ -12,7 +12,8 @@ import (
 // this interface was created to facilitate the mocking in the unit tests
 type Repository interface {
 	FindAll() ([]*Contact, error)
-	Create(Contact) (*Contact, error)
+	Create(c Contact) (*Contact, error)
+	DeleteByID(id int) error
 }
 
 type ContactsRepository struct {
@@ -69,6 +70,24 @@ func (r *ContactsRepository) Create(c Contact) (*Contact, error) {
 
 	c.ID = int(id)
 	return &c, nil
+}
+
+func (r *ContactsRepository) DeleteByID(id int) error {
+	raw := "DELETE FROM contact WHERE id = ?"
+
+	stmt, err := r.DB.Prepare(raw)
+	if err != nil {
+		return fmt.Errorf("deleteByID: error while preparing statement: %w", err)
+	}
+
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id)
+	if err != nil {
+		return fmt.Errorf("deleteByID: error while executing the delete query: %w", err)
+	}
+
+	return nil
 }
 
 var RepositorySet = wire.NewSet(

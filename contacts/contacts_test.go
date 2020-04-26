@@ -7,12 +7,12 @@ import (
 )
 
 var contactsList = []*Contact{
-	&Contact{
+	{
 		ID:        1,
 		FirstName: "Inosuke",
 		LastName:  "Hashibira",
 	},
-	&Contact{
+	{
 		ID:        2,
 		FirstName: "Gonpachiro",
 		LastName:  "Kamaboko",
@@ -37,19 +37,23 @@ func (m *MockedContactsRepository) Create(c Contact) (*Contact, error) {
 	}, nil
 }
 
+func (m *MockedContactsRepository) DeleteByID(id int) error {
+	return nil
+}
+
 var emailsList = []email.Email{
-	email.Email{ID: 1, ContactID: 1, Address: "inosuke@gmail.com"},
-	email.Email{ID: 2, ContactID: 1, Address: "pigassault@outlook.com"},
-	email.Email{ID: 3, ContactID: 2, Address: "tanjirou@gmail.com"},
+	{ID: 1, ContactID: 1, Address: "inosuke@gmail.com"},
+	{ID: 2, ContactID: 1, Address: "pigassault@outlook.com"},
+	{ID: 3, ContactID: 2, Address: "tanjirou@gmail.com"},
 }
 
 var phonesList = []phone.Phone{
-	phone.Phone{ID: 1, ContactID: 1, Number: "1122223333", Type: phone.PhoneTypeHome},
-	phone.Phone{ID: 2, ContactID: 1, Number: "33444445555", Type: phone.PhoneTypeMobile},
-	phone.Phone{ID: 3, ContactID: 1, Number: "+5511911112222", Type: phone.PhoneTypeWork},
-	phone.Phone{ID: 4, ContactID: 1, Number: "+5511933332222", Type: phone.PhoneTypeFax},
-	phone.Phone{ID: 5, ContactID: 2, Number: "11955554444", Type: phone.PhoneTypeMobile},
-	phone.Phone{ID: 6, ContactID: 2, Number: "1122223333", Type: phone.PhoneTypeHome},
+	{ID: 1, ContactID: 1, Number: "1122223333", Type: phone.PhoneTypeHome},
+	{ID: 2, ContactID: 1, Number: "33444445555", Type: phone.PhoneTypeMobile},
+	{ID: 3, ContactID: 1, Number: "+5511911112222", Type: phone.PhoneTypeWork},
+	{ID: 4, ContactID: 1, Number: "+5511933332222", Type: phone.PhoneTypeFax},
+	{ID: 5, ContactID: 2, Number: "11955554444", Type: phone.PhoneTypeMobile},
+	{ID: 6, ContactID: 2, Number: "1122223333", Type: phone.PhoneTypeHome},
 }
 
 func filterEmailsByContactID(id int) []email.Email {

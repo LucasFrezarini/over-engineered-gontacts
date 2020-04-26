@@ -103,5 +103,18 @@ func (s *Service) Create(c CreateContactData) (*Contact, error) {
 	return contact, nil
 }
 
+// DeleteContactByID deletes the contact with the provided ID in the database
+func (s *Service) DeleteContactByID(id int) error {
+	err := s.ContactsRepository.DeleteByID(id)
+
+	if err != nil {
+		msg := fmt.Sprintf("error while deleting contact of ID %d: %v", id, err)
+		s.Logger.Error(msg)
+		return errors.New(msg)
+	}
+
+	return nil
+}
+
 // ServiceSet is a wire set which contains all the bindings needed for creating a new service
 var ServiceSet = wire.NewSet(ProvideContactsService)

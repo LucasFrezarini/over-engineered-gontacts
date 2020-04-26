@@ -3,6 +3,7 @@ package contacts
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/LucasFrezarini/go-contacts/contacts/phone"
 	"github.com/google/wire"
@@ -88,6 +89,31 @@ func (ct *Controller) Create(c echo.Context) (err error) {
 	return c.JSON(http.StatusCreated, created)
 }
 
+func (ct *Controller) Delete(c echo.Context) (err error) {
+	param := c.Param("id")
+	id, err := strconv.ParseInt(param, 10, 64)
+
+	if err != nil {
+		c.JSON(400, map[string]interface{}{
+			"error": "malformed ID",
+		})
+
+		return
+	}
+
+	err = ct.service.DeleteContactByID(int(id))
+
+	if err != nil {
+		c.JSON(500, map[string]interface{}{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	return c.NoContent(204)
+}
+
 // EchoGroup is responsible for building an echo group with all routes for this controller
 func (ct *Controller) EchoGroup() *echo.Group {
 	ct.logger.Debug("Building the ContactsController routing group...")
@@ -95,6 +121,7 @@ func (ct *Controller) EchoGroup() *echo.Group {
 	gp := ct.echo.Group("/contacts")
 	gp.GET("/", ct.FindAll)
 	gp.POST("/", ct.Create)
+	gp.DELETE("/:id", ct.Delete)
 
 	return gp
 }
