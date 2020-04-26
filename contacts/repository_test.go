@@ -17,8 +17,8 @@ func TestRepositoryFindAll(t *testing.T) {
 	defer db.Close()
 
 	expectedContacts := []*Contact{
-		&Contact{ID: 1, FirstName: "Inosuke", LastName: "Hashibira"},
-		&Contact{ID: 2, FirstName: "Gonpachiro", LastName: "Kamaboko"},
+		{ID: 1, FirstName: "Inosuke", LastName: "Hashibira"},
+		{ID: 2, FirstName: "Gonpachiro", LastName: "Kamaboko"},
 	}
 
 	rows := sqlmock.NewRows([]string{"id", "first_name", "last_name"})
@@ -88,4 +88,28 @@ func TestRepositoryCreate(t *testing.T) {
 		t.Errorf("repository.Create(%T): unfulfilled mock expectations: %v", data, err)
 	}
 
+}
+
+func TestRepositoryDeleteByID(t *testing.T) {
+	db, mock, err := sqlmock.New()
+	if err != nil {
+		t.Fatalf("unexpected error while opening a stub database connection: %v", err)
+	}
+
+	defer db.Close()
+
+	contactID := 2
+
+	mock.ExpectPrepare("DELETE FROM contact WHERE id = (.+)").ExpectExec().WithArgs(contactID).WillReturnResult(sqlmock.NewResult(0, 1))
+
+	repository := ProvideContactsRepository(db, zap.NewNop())
+	err = repository.DeleteByID(contactID)
+
+	if err != nil {
+		t.Errorf("repository.DeleteByID(%d): returned an error while creating a new contact: %v", contactID, err)
+	}
+
+	if err := mock.ExpectationsWereMet(); err != nil {
+		t.Errorf("repository.DeleteByID(%d): unfulfilled mock expectations: %v", contactID, err)
+	}
 }

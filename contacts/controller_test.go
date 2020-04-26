@@ -3,12 +3,14 @@ package contacts
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/LucasFrezarini/go-contacts/contacts/email"
+	"github.com/LucasFrezarini/go-contacts/contacts/phone"
 	"github.com/LucasFrezarini/go-contacts/server/validator"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
@@ -62,60 +64,135 @@ func TestGetAllContacts(t *testing.T) {
 	}
 }
 
-func TestCreateContact(t *testing.T) {
-	body := map[string]string{
-		"first_name": "Zenitsu",
-		"last_name":  "Agatsuma",
+func TestCreateContactSuccess(t *testing.T) {
+	var testCases = []struct {
+		body map[string]interface{}
+	}{
+		{
+			body: map[string]interface{}{
+				"first_name": "Giyu",
+				"last_name":  "Tomioka",
+			},
+		},
+		{
+			body: map[string]interface{}{
+				"first_name": "Kyojuro",
+				"last_name":  "Rengoku",
+				"emails":     []string{},
+			},
+		},
+		{
+			body: map[string]interface{}{
+				"first_name": "Zenitsu",
+				"last_name":  "Agatsuma",
+				"emails":     []string{"zenitsu.agatsuma@gmail.com"},
+				"phones": []map[string]string{
+					{
+						"type":   "home",
+						"number": "551122223333",
+					},
+					{
+						"type":   "mobile",
+						"number": "5511944445555",
+					},
+					{
+						"type":   "fax",
+						"number": "5511666677777",
+					},
+					{
+						"type":   "work",
+						"number": "551188889999",
+					},
+				},
+			},
+		},
 	}
 
-	b, err := json.Marshal(body)
-	if err != nil {
-		t.Fatalf("error while marshaling request body: %v", err)
-	}
+	for _, tc := range testCases {
+		body := tc.body
+		b, err := json.Marshal(body)
+		if err != nil {
+			t.Fatalf("error while marshaling request body: %v", err)
+		}
 
-	e := echo.New()
-	e.Validator = validator.NewCustomValidator()
+		e := echo.New()
+		e.Validator = validator.NewCustomValidator()
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(b))
-	req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(b))
+		req.Header.Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
 
-	controller := ProvideContactsController(
-		nil,
-		&MockedContactsRepository{},
-		zap.NewNop(),
-		e,
-	)
+		controller := ProvideContactsController(
+			ProvideContactMockedService(),
+			&MockedContactsRepository{},
+			zap.NewNop(),
+			e,
+		)
 
-	err = controller.Create(c)
-	if err != nil {
-		t.Errorf("controller Create() returned an error: %v", err)
-	}
+		err = controller.Create(c)
+		if err != nil {
+			t.Errorf("controller Create() returned an error: %v\nRequest body:\t%v", err, body)
+		}
 
-	if contentType := rec.Header().Get("Content-Type"); !strings.Contains(contentType, "application/json") {
-		t.Errorf("Create() response header 'Content-Type' doesn't contains 'application/json' (%s)", contentType)
-	}
+		if contentType := rec.Header().Get("Content-Type"); !strings.Contains(contentType, "application/json") {
+			t.Errorf("Create() response header 'Content-Type' doesn't contains 'application/json' (%s)", contentType)
+		}
 
-	if expected := http.StatusCreated; rec.Code != expected {
-		t.Errorf("Create() wrote respose status %d, want %d", rec.Code, expected)
-	}
+		if expected := http.StatusCreated; rec.Code != expected {
+			t.Errorf("Create() wrote respose status %d, want %d", rec.Code, expected)
+		}
 
-	var responseBody Contact
-	err = json.Unmarshal(rec.Body.Bytes(), &responseBody)
-	if err != nil {
-		t.Errorf("Create() error while unmarshaling response body: %v", err)
-	}
+		var responseBody Contact
+		err = json.Unmarshal(rec.Body.Bytes(), &responseBody)
+		if err != nil {
+			t.Errorf("Create() error while unmarshaling response body: %v", err)
+		}
 
-	expectedBody := Contact{
-		ID:        1,
-		FirstName: body["first_name"],
-		LastName:  body["last_name"],
-	}
+		var expectedEmails []email.Email
+		var expectedPhones []phone.Phone
 
-	if !reflect.DeepEqual(expectedBody, responseBody) {
-		t.Errorf("Create() response body returned %v, want %v", responseBody, expectedBody)
+		if emails, exists := body["emails"]; exists {
+			for _, e := range emails.([]string) {
+				expectedEmails = append(expectedEmails, email.Email{
+					Address: e,
+				})
+			}
+		}
+
+		if phones, exists := body["phones"]; exists {
+			for _, p := range phones.([]map[string]string) {
+				expectedPhones = append(expectedPhones, phone.Phone{
+					Type:   p["type"],
+					Number: p["number"],
+				})
+			}
+		}
+
+		expectedBody := Contact{
+			ID:        1,
+			FirstName: body["first_name"].(string),
+			LastName:  body["last_name"].(string),
+			Emails:    expectedEmails,
+			Phones:    expectedPhones,
+		}
+
+		if expected, got := expectedBody.FirstName, responseBody.FirstName; expected != got {
+			t.Errorf("Create() response body first_name returned %q, want %q", got, expected)
+		}
+
+		if expected, got := expectedBody.LastName, responseBody.LastName; expected != got {
+			t.Errorf("Create() response body last_name returned %q, want %q", got, expected)
+		}
+
+		if expected, got := len(expectedBody.Emails), len(responseBody.Emails); expected != got {
+			t.Errorf("Create() response body returned %d emails, want %d", got, expected)
+		}
+
+		if expected, got := len(expectedBody.Phones), len(responseBody.Phones); expected != got {
+			t.Errorf("Create() response body returned %d phones, want %d", got, expected)
+		}
 	}
 }
 
@@ -198,4 +275,32 @@ func TestCreateContactBadRequest(t *testing.T) {
 		})
 	}
 
+}
+
+func TestDeleteContactByID(t *testing.T) {
+	id := 2
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodDelete, fmt.Sprintf("/%d", id), nil)
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+	c.SetPath("/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("2")
+
+	controller := ProvideContactsController(
+		ProvideContactsService(zap.NewNop(), &MockedContactsRepository{}, &MockedEmailRepository{}, &MockedPhoneRepository{}),
+		&MockedContactsRepository{},
+		zap.NewNop(),
+		e,
+	)
+
+	err := controller.Delete(c)
+
+	if err != nil {
+		t.Errorf("controller Delete() returned an error: %v", err)
+	}
+
+	if expected := 204; rec.Code != expected {
+		t.Errorf("Delete wrote respose status %d, want %d", rec.Code, expected)
+	}
 }

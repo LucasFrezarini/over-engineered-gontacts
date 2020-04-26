@@ -3,7 +3,9 @@ package contacts
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 
+	"github.com/LucasFrezarini/go-contacts/contacts/phone"
 	"github.com/google/wire"
 	"github.com/labstack/echo/v4"
 	"go.uber.org/zap"
@@ -44,8 +46,14 @@ func (ct *Controller) FindAll(c echo.Context) error {
 
 // Create creates a new contact with the info provided in the body
 func (ct *Controller) Create(c echo.Context) (err error) {
-	body := new(Contact)
+	type RequestBody struct {
+		FirstName string              `json:"first_name" validate:"required"`
+		LastName  string              `json:"last_name" validate:"required"`
+		Emails    []string            `json:"emails"`
+		Phones    []map[string]string `json:"phones"`
+	}
 
+	body := new(RequestBody)
 	if err = c.Bind(body); err != nil {
 		return
 	}
@@ -58,12 +66,52 @@ func (ct *Controller) Create(c echo.Context) (err error) {
 		return
 	}
 
-	created, err := ct.repository.Create(*body)
+	phonesData := make([]phone.CreatePhoneData, 0, len(body.Phones))
+
+	for _, p := range body.Phones {
+		phonesData = append(phonesData, phone.CreatePhoneData{
+			Number: p["number"],
+			Type:   p["type"],
+		})
+	}
+
+	created, err := ct.service.Create(CreateContactData{
+		FirstName: body.FirstName,
+		LastName:  body.LastName,
+		Emails:    body.Emails,
+		Phones:    phonesData,
+	})
+
 	if err != nil {
 		return
 	}
 
 	return c.JSON(http.StatusCreated, created)
+}
+
+func (ct *Controller) Delete(c echo.Context) (err error) {
+	param := c.Param("id")
+	id, err := strconv.ParseInt(param, 10, 64)
+
+	if err != nil {
+		c.JSON(400, map[string]interface{}{
+			"error": "malformed ID",
+		})
+
+		return
+	}
+
+	err = ct.service.DeleteContactByID(int(id))
+
+	if err != nil {
+		c.JSON(500, map[string]interface{}{
+			"error": err.Error(),
+		})
+
+		return
+	}
+
+	return c.NoContent(204)
 }
 
 // EchoGroup is responsible for building an echo group with all routes for this controller
@@ -73,6 +121,7 @@ func (ct *Controller) EchoGroup() *echo.Group {
 	gp := ct.echo.Group("/contacts")
 	gp.GET("/", ct.FindAll)
 	gp.POST("/", ct.Create)
+	gp.DELETE("/:id", ct.Delete)
 
 	return gp
 }
